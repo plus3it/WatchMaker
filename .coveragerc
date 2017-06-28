@@ -17,3 +17,4 @@ omit =
     *migrations*
     src/watchmaker/__main__.py
     */site-packages/watchmaker/__main__.py
+    tests/*

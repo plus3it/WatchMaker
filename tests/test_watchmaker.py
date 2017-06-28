@@ -5,6 +5,7 @@ from __future__ import (absolute_import, division, print_function,
 
 import os
 
+from watchmaker import Arguments
 from watchmaker.cli import LOG_LOCATIONS
 
 
@@ -16,6 +17,23 @@ def test_log_location_dict():
     location = LOG_LOCATIONS['windows']
     assert location == os.path.sep.join((
         os.environ.get('SYSTEMDRIVE', 'C:'), 'Watchmaker', 'Logs'))
+
+
+def test_default_argument_settings():
+    """Tests that initial Arguments class default settings are correct."""
+    args = Arguments()
+    assert args.config_path is None
+    assert args.log_dir is None
+    assert not args.no_reboot
+    assert args.log_level is None
+    assert args.admin_groups is None
+    assert args.admin_users is None
+    assert args.computer_name is None
+    assert args.environment is None
+    assert args.salt_states is None
+    assert args.s3_source is None
+    assert args.ou_path is None
+    assert args.extra_arguments == []
 
 
 def skip_cli_main_entry_point():
