@@ -91,3 +91,4 @@ tests/logfiles/
 nosetests.xml
 coverage.xml
 htmlcov
+logfiles

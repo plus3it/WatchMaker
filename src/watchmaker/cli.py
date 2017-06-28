@@ -79,7 +79,7 @@ LOG_LOCATIONS = {
                   'domain. E.g. "OU=SuperCoolApp,DC=example,DC=com"'))
 @click.argument('extra_arguments', nargs=-1, type=click.UNPROCESSED,
                 metavar='')
-def main(extra_arguments=None, **kwargs):
+def main(extra_arguments=None, **kwargs):  # pragma: no cover
     """Entry point for Watchmaker cli."""
     prepare_logging(kwargs['log_dir'], kwargs['log_level'])
 
