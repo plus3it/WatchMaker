@@ -36,6 +36,30 @@ def test_default_argument_settings():
     assert args.extra_arguments == []
 
 
+def test_argument_settings():
+    """Tests that Arguments class with passed in settings."""
+    args = Arguments(config_path='here', log_dir='there',
+                     no_reboot=True, log_level='info',
+                     computer_name='test_computer', s3_source='aws',
+                     arg1='forget', arg2='me', arg3='you',
+                     extra_arguments=['arg1', 'forget', 'arg2', 'm3'])
+    assert args.config_path == 'here'
+    assert args.log_dir == 'there'
+    assert args.no_reboot
+    assert args.log_level == 'info'
+    assert args.admin_groups is None
+    assert args.admin_users is None
+    assert args.computer_name == 'test_computer'
+    assert args.environment is None
+    assert args.salt_states is None
+    assert args.s3_source == 'aws'
+    assert args.ou_path is None
+    assert args.extra_arguments == ['arg1', 'forget', 'arg2', 'm3']
+    assert args.arg1 == 'forget'
+    assert args.arg2 == 'me'
+    assert args.arg3 == 'you'
+
+
 def skip_cli_main_entry_point():
     """
     We can skip the test for cli's main.
