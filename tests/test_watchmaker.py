@@ -3,9 +3,13 @@
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals, with_statement)
 
+import io
 import os
 
-from watchmaker import Arguments
+import pytest
+from six.moves import urllib
+
+from watchmaker import Arguments, Client
 from watchmaker.cli import LOG_LOCATIONS
 
 
@@ -20,7 +24,7 @@ def test_log_location_dict():
 
 
 def test_default_argument_settings():
-    """Tests that initial Arguments class default settings are correct."""
+    """Tests the initial Arguments class default settings are correct."""
     args = Arguments()
     assert args.config_path is None
     assert args.log_dir is None
@@ -37,7 +41,7 @@ def test_default_argument_settings():
 
 
 def test_argument_settings():
-    """Tests that Arguments class with passed in settings."""
+    """Tests the Arguments class with passed-in settings."""
     args = Arguments(config_path='here', log_dir='there',
                      no_reboot=True, log_level='info',
                      computer_name='test_computer', s3_source='aws',
@@ -58,6 +62,76 @@ def test_argument_settings():
     assert args.arg1 == 'forget'
     assert args.arg2 == 'me'
     assert args.arg3 == 'you'
+
+
+def test_validating_urls():
+    """Tests validating urls."""
+    assert Client._validate_url('http://www.google.com') is True
+    assert Client._validate_url('where.do.we.go') is False
+    assert Client._validate_url('https://home.on.range') is True
+
+
+class TestErrors:
+    """Group of tests for catching errors."""
+
+    def test_get_config_data_via_url_throws_error(self):
+        """Tests error is raised if bad url is passed."""
+        cli = Client(Arguments())
+        with pytest.raises(urllib.error.URLError):
+            cli.get_config_data(True, 'http://www.nothere.bad')
+
+
+class MockTests:
+    """Grou of tests utilizing some mock features."""
+
+    def test_get_config_data_via_url(self, mocker):
+        """Tests obtaining config yaml from url."""
+        cli = Client(Arguments())
+        mock_urlopen = mocker.patch('urllib.request.urlopen')
+        mock_urlopen.return_value = io.StringIO('test')
+        assert cli.get_config_data(True, 'http://www.nothere.bad') == 'test'
+
+    def test_get_config_data_via_file(self, mocker):
+        """Tests obtaining config yaml from file."""
+        cli = Client(Arguments())
+        mock_fh = mocker.patch('codecs.open')
+        mock_fh.return_value = io.StringIO('test')
+        assert cli.get_config_data(False, 'path_to_file') == 'test'
+
+
+def test_initializing_client_with_defaults(caplog):
+    """Tests initialization of Client with default arguments."""
+    cli = Client(Arguments())
+    assert cli.worker_args is not None
+    assert (
+        'User did not supply a config. Using the default config.'
+        in caplog.text
+    )
+    assert 'User supplied config being used.' not in caplog.text
+    assert cli.config_path == cli.default_config
+
+
+def test_initializing_client_with_args(caplog, mocker):
+    """Tests initialization og Client with passed in arguments."""
+    default_cli = Client(Arguments())
+    args = Arguments(config_path='here', log_dir='there',
+                     no_reboot=True, log_level='info',
+                     computer_name='test_computer', s3_source='aws',
+                     arg1='forget', arg2='me', arg3='you',
+                     extra_arguments=['arg1', 'forget', 'arg2', 'm3'])
+    mocker.patch('os.path.exists')
+    mocker.patch.object(
+        Client,
+        'get_config_data',
+        return_value=default_cli.get_config_data(
+            False,
+            default_cli.default_config
+        )
+    )
+    cli = Client(args)
+    assert cli.worker_args is not None
+    assert 'User supplied config being used.' in caplog.text
+    assert cli.config_path == 'here'
 
 
 def skip_cli_main_entry_point():

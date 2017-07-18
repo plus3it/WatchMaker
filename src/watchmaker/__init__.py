@@ -251,6 +251,23 @@ class Client(object):
     def _validate_url(url):
         return urllib.parse.urlparse(url).scheme in ['http', 'https']
 
+    def get_config_data(self, is_url, path):
+        """Read in config yaml from file or url."""
+        if is_url:
+            try:
+                data = urllib.request.urlopen(path).read()
+            except urllib.error.URLError:
+                msg = (
+                    'The URL used to get the user config.yaml file did not '
+                    'work! Please make sure your config is available.'
+                )
+                self.log.critical(msg)
+                raise
+        else:
+            with codecs.open(path, encoding="utf-8") as fh_:
+                data = fh_.read()
+        return data
+
     def _get_config(self):
         """
         Read and validate configuration data for installation.
@@ -272,15 +289,7 @@ class Client(object):
         # Get the raw config data
         data = ''
         if self._validate_url(self.config_path):
-            try:
-                data = urllib.request.urlopen(self.config_path).read()
-            except urllib.error.URLError:
-                msg = (
-                    'The URL used to get the user config.yaml file did not '
-                    'work! Please make sure your config is available.'
-                )
-                self.log.critical(msg)
-                raise
+            data = self.get_config_data(True, self.config_path)
         elif self.config_path and not os.path.exists(self.config_path):
             msg = (
                 'User supplied config {0} does not exist. Please '
@@ -290,8 +299,7 @@ class Client(object):
             self.log.critical(msg)
             raise WatchmakerException(msg)
         else:
-            with codecs.open(self.config_path, encoding="utf-8") as fh_:
-                data = fh_.read()
+            data = self.get_config_data(False, self.config_path)
 
         config_full = yaml.safe_load(data)
         try:
