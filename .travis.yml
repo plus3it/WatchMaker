@@ -132,3 +132,17 @@ jobs:
         skip_upload_docs: true
         on:
           tags: true
+
+    - stage: deploy
+      name: publish scap reports 
+      if: type = pull_request
+      python: 3.8
+      install: skip
+      script: skip
+      before_deploy:
+        - pip install awscli
+        - echo Generating SCAP reports
+      after_deploy: echo SCAP reports published
+      deploy:
+      - provider: script
+        script: aws codebuild start-build --project-name p3-terrafirm
